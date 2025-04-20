@@ -1,3 +1,7 @@
+# PointLIO_Forest_Inventory
+This repository is a revsied version of Point-LIO. It output the original point cloud, transformed point cloud, and the pose calculated by PointLIO through a self-designed ROS message (key_frame_info.msg).
+Then, these data are adopted to segment individual trees and calculate the attributes in real-time, depends on the another repository.
+
 # Point-LIO
 ## Point-LIO: Robust High-Bandwidth Lidar-Inertial Odometry
 # Point-LIO
