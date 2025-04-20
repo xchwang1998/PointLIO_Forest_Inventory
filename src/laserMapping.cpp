@@ -241,6 +241,65 @@ void publish_frame_body(const ros::Publisher & pubLaserCloudFull_body)
     // publish_count -= PUBFRAME_PERIOD;
 }
 
+/******* Publish Key Frame Info *******/
+void publish_key_frame_info(const ros::Publisher pubKeyFrameInfo)
+{
+    // set the key frame info
+    point_lio::key_frame_info keyframeInfo;
+    keyframeInfo.header.stamp = ros::Time().fromSec(lidar_end_time);
+    keyframeInfo.header.frame_id = "camera_init";
+    pcl::PointCloud<ouster_ros::Point>::Ptr cloud(new pcl::PointCloud<ouster_ros::Point>);
+
+    // transformed the ouster data
+    int size = ouster_undistort->points.size();
+    pcl::PointCloud<ouster_ros::Point>::Ptr ousterCloudWorld(new pcl::PointCloud<ouster_ros::Point>(size,1));
+    for (int i = 0; i < size; i++)
+    {
+        pointBodyToWorld(&ouster_undistort->points[i], &ousterCloudWorld->points[i]);(&ouster_undistort->points[i], &ousterCloudWorld->points[i]);
+    }
+
+    // get the original Ouster data
+    sensor_msgs::PointCloud2 ousterCloudOriMsg;
+    pcl::toROSMsg(*ouster_undistort, ousterCloudOriMsg);
+    ousterCloudOriMsg.header.stamp = ros::Time().fromSec(lidar_end_time);
+    ousterCloudOriMsg.header.frame_id = "camera_init";
+    
+    // get the transformed Ouster data
+    sensor_msgs::PointCloud2 ousterCloudWorldMsg;
+    pcl::toROSMsg(*ousterCloudWorld, ousterCloudWorldMsg);
+    ousterCloudWorldMsg.header.stamp = ros::Time().fromSec(lidar_end_time);
+    ousterCloudWorldMsg.header.frame_id = "camera_init";
+    
+    // get current transtformation
+    std::vector<double> curr_pose = getKeyTransformation();
+
+    // set the key frame Info msg data (include original data and tranformed to world)
+    keyframeInfo.key_frame_cloud_ori = ousterCloudOriMsg;
+    keyframeInfo.key_frame_cloud_transed = ousterCloudWorldMsg;
+
+    /*** slected the keyframe at 1Hz ***/
+    static int jjj = 0;
+    if (jjj % 10 == 0) 
+    {
+        // stack the pose at 1 Hz
+        PointTypePose pj;
+        pj.x = curr_pose[0]; pj.y = curr_pose[1]; pj.z = curr_pose[2];
+        pj.roll = curr_pose[3]; pj.pitch = curr_pose[4]; pj.yaw = curr_pose[5];
+        key_frame_poses_data->push_back(pj);
+        
+        // convert the point cloud into sensor message
+        sensor_msgs::PointCloud2 keyFramePosesMsg;
+        keyFramePosesMsg.header.stamp = ros::Time().fromSec(lidar_end_time);
+        keyFramePosesMsg.header.frame_id = "camera_init";
+        pcl::toROSMsg(*key_frame_poses_data, keyFramePosesMsg);
+        
+        // set the data of key frame info
+        keyframeInfo.key_frame_poses = keyFramePosesMsg;
+        pubKeyFrameInfo.publish(keyframeInfo);
+    }
+    jjj++;
+}
+
 template<typename T>
 void set_posestamp(T & out)
 {
@@ -388,6 +447,10 @@ int main(int argc, char** argv)
             ("/aft_mapped_to_init", 1000);
     ros::Publisher pubPath          = nh.advertise<nav_msgs::Path> 
             ("/path", 1000);
+    
+    ros::Publisher pubKeyFrameInfo  = nh.advertise<point_lio::key_frame_info> 
+        ("/point_lio/key_frame_info", 100000);
+
     // ros::Publisher plane_pub = nh.advertise<visualization_msgs::Marker>
             // ("/planner_normal", 1000);
 //------------------------------------------------------------------------------------------------------
@@ -1021,6 +1084,9 @@ int main(int argc, char** argv)
             if (scan_pub_en || pcd_save_en)      publish_frame_world(pubLaserCloudFullRes);
             if (scan_pub_en && scan_body_pub_en) publish_frame_body(pubLaserCloudFullRes_body);
             
+            /******* Publish keyframe information *******/
+            publish_key_frame_info(pubKeyFrameInfo);
+
             /*** Debug variables Logging ***/
             if (runtime_pos_log)
             {

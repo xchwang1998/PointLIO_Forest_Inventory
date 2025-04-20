@@ -400,3 +400,104 @@ void pointBodyToWorld(PointType const * const pi, PointType * const po)
     po->z = p_global(2);
     po->intensity = pi->intensity;
 }
+
+// transform the ouster point from body to world
+void pointBodyToWorld(ouster_ros::Point const * const pi, ouster_ros::Point * const po)
+{
+    if (pi == nullptr || po == nullptr) {
+        std::cerr << "Error: Null pointer passed to RGBpointBodyToWorld!" << std::endl;
+        return;
+    }
+
+    V3D p_body(pi->x, pi->y, pi->z);
+    V3D p_global;
+
+	if (extrinsic_est_en)
+	{	
+		if (!use_imu_as_input)
+		{
+			p_global = kf_output.x_.rot * (kf_output.x_.offset_R_L_I * p_body + kf_output.x_.offset_T_L_I) + kf_output.x_.pos;
+		}
+		else
+		{
+			p_global = kf_input.x_.rot * (kf_input.x_.offset_R_L_I * p_body + kf_input.x_.offset_T_L_I) + kf_input.x_.pos;
+		}
+	}
+	else
+	{
+		if (!use_imu_as_input)
+		{
+			p_global = kf_output.x_.rot * (Lidar_R_wrt_IMU * p_body + Lidar_T_wrt_IMU) + kf_output.x_.pos; // .normalized()
+		}
+		else
+		{
+			p_global = kf_input.x_.rot * (Lidar_R_wrt_IMU * p_body + Lidar_T_wrt_IMU) + kf_input.x_.pos; // .normalized()
+		}
+	}
+
+    po->x = p_global(0);
+    po->y = p_global(1);
+    po->z = p_global(2);
+
+    // copy pi
+    po->intensity = pi->intensity;
+    po->t = pi->t;
+    po->reflectivity = pi->reflectivity;
+    po->ring = pi->ring;
+    po->ambient = pi->ambient;
+    po->range = pi->range;
+
+}
+
+// get current key transformation data
+std::vector<double> getKeyTransformation()
+{
+	SO3 ROT;
+	vect3 TRANS;
+
+	if (extrinsic_est_en)
+	{	
+		if (!use_imu_as_input)
+		{
+			ROT = kf_output.x_.rot * kf_output.x_.offset_R_L_I;
+			TRANS = kf_output.x_.rot * kf_output.x_.offset_T_L_I + kf_output.x_.pos;
+			// p_global = kf_output.x_.rot * (kf_output.x_.offset_R_L_I * p_body + kf_output.x_.offset_T_L_I) + kf_output.x_.pos;
+		}
+		else
+		{
+			ROT = kf_input.x_.rot * kf_input.x_.offset_R_L_I;
+			TRANS = kf_input.x_.rot * kf_input.x_.offset_T_L_I + kf_input.x_.pos;
+			// p_global = kf_input.x_.rot * (kf_input.x_.offset_R_L_I * p_body + kf_input.x_.offset_T_L_I) + kf_input.x_.pos;
+		}
+	}
+	else
+	{
+		if (!use_imu_as_input)
+		{
+			ROT = kf_output.x_.rot * Lidar_R_wrt_IMU;
+			TRANS = kf_output.x_.rot * Lidar_T_wrt_IMU + kf_output.x_.pos;
+			// p_global = kf_output.x_.rot * (Lidar_R_wrt_IMU * p_body + Lidar_T_wrt_IMU) + kf_output.x_.pos; // .normalized()
+		}
+		else
+		{
+			ROT = kf_input.x_.rot * Lidar_R_wrt_IMU;
+			TRANS = kf_input.x_.rot * Lidar_T_wrt_IMU + kf_input.x_.pos;
+			// p_global = kf_input.x_.rot * (Lidar_R_wrt_IMU * p_body + Lidar_T_wrt_IMU) + kf_input.x_.pos; // .normalized()
+		}
+	}
+
+	// create an Affine variable
+	Eigen::Affine3d affine = Eigen::Affine3d::Identity();
+    affine.linear() = ROT;
+    affine.translation() = TRANS;
+	
+	// convert to the x y z roll pitch yaw variables
+	std::vector<double> transformed_para;
+    double x, y, z, roll, pitch, yaw;
+    pcl::getTranslationAndEulerAngles(affine, x, y, z, roll, pitch, yaw);
+	
+	// return data
+	transformed_para.push_back(x); transformed_para.push_back(y); transformed_para.push_back(z);
+	transformed_para.push_back(roll); transformed_para.push_back(pitch); transformed_para.push_back(yaw);
+	return transformed_para;
+}

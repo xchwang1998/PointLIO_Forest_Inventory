@@ -18,6 +18,14 @@ extern int frame_ct, wait_num;
 extern std::deque<PointCloudXYZI::Ptr>  lidar_buffer;
 extern std::deque<double>               time_buffer;
 extern std::deque<sensor_msgs::Imu::Ptr> imu_deque;
+
+// set the ouster data buffer
+extern  std::deque<pcl::PointCloud<ouster_ros::Point>::Ptr> ouster_buffer;
+// set the ouster point cloud and the key frame pose
+extern pcl::PointCloud<ouster_ros::Point>::Ptr ouster_undistort;
+// set the key frame pose
+extern pcl::PointCloud<PointTypePose>::Ptr key_frame_poses_data;
+
 extern std::mutex m_time;
 extern bool lidar_pushed, imu_pushed;
 extern double imu_first_time;

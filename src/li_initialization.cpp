@@ -22,6 +22,13 @@ std::deque<PointCloudXYZI::Ptr>  lidar_buffer;
 std::deque<double>               time_buffer;
 std::deque<sensor_msgs::Imu::Ptr> imu_deque;
 
+// set the ouster data buffer
+std::deque<pcl::PointCloud<ouster_ros::Point>::Ptr>  ouster_buffer;
+// set the ouster point cloud and the key frame pose
+pcl::PointCloud<ouster_ros::Point>::Ptr ouster_undistort(new pcl::PointCloud<ouster_ros::Point>());
+// set the key frame pose
+pcl::PointCloud<PointTypePose>::Ptr key_frame_poses_data(new pcl::PointCloud<PointTypePose>());
+
 void standard_pcl_cbk(const sensor_msgs::PointCloud2::ConstPtr &msg) 
 {
     // mtx_buffer.lock();
@@ -93,6 +100,11 @@ void standard_pcl_cbk(const sensor_msgs::PointCloud2::ConstPtr &msg)
         {
             lidar_buffer.emplace_back(ptr);
             time_buffer.emplace_back(msg->header.stamp.toSec());
+            
+            // get the ouster data
+            pcl::PointCloud<ouster_ros::Point>::Ptr ouster_data(new pcl::PointCloud<ouster_ros::Point>());
+            pcl::fromROSMsg(*msg, *ouster_data);
+            ouster_buffer.push_back(ouster_data);
         }
     }
     }
@@ -220,6 +232,7 @@ bool sync_packages(MeasureGroup &meas)
             {
                 meas.lidar = lidar_buffer.front();
                 meas.lidar_beg_time = time_buffer.front();
+
                 lose_lid = false;
                 if(meas.lidar->points.size() < 1) 
                 {
@@ -258,7 +271,8 @@ bool sync_packages(MeasureGroup &meas)
         return false;
     }
 
-    if (lidar_buffer.empty() || imu_deque.empty())
+    // if (lidar_buffer.empty() || imu_deque.empty())
+    if (lidar_buffer.empty() || imu_deque.empty() || ouster_buffer.empty())
     {
         return false;
     }
@@ -268,6 +282,9 @@ bool sync_packages(MeasureGroup &meas)
         lose_lid = false;
         meas.lidar = lidar_buffer.front();
         meas.lidar_beg_time = time_buffer.front();
+        
+        ouster_undistort = ouster_buffer.front();
+
         if(meas.lidar->points.size() < 1) 
         {
             cout << "lose lidar" << endl;
@@ -347,6 +364,8 @@ bool sync_packages(MeasureGroup &meas)
 
     lidar_buffer.pop_front();
     time_buffer.pop_front();
+    ouster_buffer.pop_front();
+
     lidar_pushed = false;
     imu_pushed = false;
     return true;

@@ -74,9 +74,15 @@ link_directories(
 	${PCL_LIBRARY_DIRS}
 )
 
+add_message_files(
+  FILES
+  key_frame_info.msg
+)
+
 generate_messages(
  DEPENDENCIES
  geometry_msgs
+ sensor_msgs
 )
 
 catkin_package(

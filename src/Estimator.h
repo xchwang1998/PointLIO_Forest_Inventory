@@ -58,4 +58,10 @@ void h_model_IMU_output(state_output &s, esekfom::dyn_share_modified<double> &ek
 
 void pointBodyToWorld(PointType const * const pi, PointType * const po);
 
+// transform the ouster point from body to world
+void pointBodyToWorld(ouster_ros::Point const * const pi, ouster_ros::Point * const po);
+
+// get current key transformation data
+std::vector<double> getKeyTransformation();
+
 #endif

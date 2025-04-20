@@ -12,6 +12,8 @@
 #include <../include/IKFoM/IKFoM_toolkit/esekfom/esekfom.hpp>
 #include <queue>
 
+#include <point_lio/key_frame_info.h>
+
 using namespace std;
 using namespace Eigen;
 
