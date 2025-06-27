@@ -1,8 +1,8 @@
 common:
-    # lid_topic:  "/os_cloud_node_1/points"
-    # imu_topic:  "/os_cloud_node_1/imu"
-    lid_topic:  "/ouster/points"    # "/os_cloud_node_1/points"
-    imu_topic:  "/ouster/imu"       # "/os_cloud_node_1/imu"
+    lid_topic:  "/os_cloud_node_1/points"
+    imu_topic:  "/os_cloud_node_1/imu"
+    # lid_topic:  "/ouster/points"    # "/os_cloud_node_1/points"
+    # imu_topic:  "/ouster/imu"       # "/os_cloud_node_1/imu"
     con_frame: false # true: if you need to combine several LiDAR frames into one
     con_frame_num: 1 # the number of frames combined
     cut_frame: false # true: if you need to cut one LiDAR frame into several subframes
