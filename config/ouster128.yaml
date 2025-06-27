@@ -1,6 +1,8 @@
 common:
-    lid_topic:  "/os_cloud_node_1/points"
-    imu_topic:  "/os_cloud_node_1/imu"
+    # lid_topic:  "/os_cloud_node_1/points"
+    # imu_topic:  "/os_cloud_node_1/imu"
+    lid_topic:  "/ouster/points"    # "/os_cloud_node_1/points"
+    imu_topic:  "/ouster/imu"       # "/os_cloud_node_1/imu"
     con_frame: false # true: if you need to combine several LiDAR frames into one
     con_frame_num: 1 # the number of frames combined
     cut_frame: false # true: if you need to cut one LiDAR frame into several subframes
@@ -53,6 +55,6 @@ publish:
     scan_bodyframe_pub_en: false  # true: output the point cloud scans in IMU-body-frame
 
 pcd_save:
-    pcd_save_en: false
+    pcd_save_en: true
     interval: -1                 # how many LiDAR frames saved in each pcd file; 
                                  # -1 : all frames will be saved in ONE pcd file, may lead to memory crash when having too much frames.

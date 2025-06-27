@@ -228,6 +228,7 @@ bool sync_packages(MeasureGroup &meas)
     {
         if (!lidar_buffer.empty())
         {
+            
             if (!lidar_pushed)
             {
                 meas.lidar = lidar_buffer.front();

@@ -207,18 +207,18 @@ void publish_frame_world(const ros::Publisher & pubLaserCloudFullRes)
 
         *pcl_wait_save += *laserCloudWorld;
 
-        static int scan_wait_num = 0;
-        scan_wait_num ++;
-        if (pcl_wait_save->size() > 0 && scan_wait_num >= pcd_save_interval)
-        {
-            pcd_index ++;
-            string all_points_dir(string(string(ROOT_DIR) + "PCD/scans_") + to_string(pcd_index) + string(".pcd"));
-            pcl::PCDWriter pcd_writer;
-            cout << "current scan saved to /PCD/" << all_points_dir << endl;
-            pcd_writer.writeBinary(all_points_dir, *pcl_wait_save);
-            pcl_wait_save->clear();
-            scan_wait_num = 0;
-        }
+        // static int scan_wait_num = 0;
+        // scan_wait_num ++;
+        // if (pcl_wait_save->size() > 0 && scan_wait_num >= pcd_save_interval)
+        // {
+        //     pcd_index ++;
+        //     string all_points_dir(string(string(ROOT_DIR) + "PCD/scans_") + to_string(pcd_index) + string(".pcd"));
+        //     pcl::PCDWriter pcd_writer;
+        //     cout << "current scan saved to /PCD/" << all_points_dir << endl;
+        //     pcd_writer.writeBinary(all_points_dir, *pcl_wait_save);
+        //     pcl_wait_save->clear();
+        //     scan_wait_num = 0;
+        // }
     }
 }
 
@@ -1126,6 +1126,7 @@ int main(int argc, char** argv)
     //--------------------------save map-----------------------------------
     /* 1. make sure you have enough memories
     /* 2. noted that pcd save will influence the real-time performences **/
+    std::cout << "pcl_wait_save: " << pcl_wait_save->size() << ", pcd_save_en: " << pcd_save_en << std::endl;
     if (pcl_wait_save->size() > 0 && pcd_save_en)
     {
         string file_name = string("scans.pcd");
